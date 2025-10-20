@@ -22,7 +22,6 @@ let throttleTimeout: NodeJS.Timeout | null = null;
 
 export function MessageInput({ currentUser, onMessageSent, replyTo, onCancelReply }: MessageInputProps) {
   const [content, setContent] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [charCount, setCharCount] = useState(0);
   const isTypingRef = useRef(false);
 
@@ -79,29 +78,30 @@ export function MessageInput({ currentUser, onMessageSent, replyTo, onCancelRepl
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!content.trim() || isLoading) {
+    if (!content.trim()) {
       return;
     }
 
     const messageContent = content.trim();
+    const currentReplyTo = replyTo; // Capture current reply context
     
     // PRIORITY: Clear typing status IMMEDIATELY before anything else
     clearTypingStatus();
     
     // Create optimistic message for instant UI update
     const optimisticMessage: MessageWithUser = {
-      id: `temp-${Date.now()}`, // Temporary ID
+      id: `temp-${Date.now()}-${Math.random()}`, // Unique temporary ID
       content: messageContent,
       userId: currentUser.id,
       isDeleted: false,
       isEdited: false,
-      replyToId: replyTo?.id || null,
-      replyTo: replyTo ? {
-        id: replyTo.id,
-        content: replyTo.content,
-        userId: replyTo.userId,
-        isDeleted: replyTo.isDeleted,
-        user: replyTo.user,
+      replyToId: currentReplyTo?.id || null,
+      replyTo: currentReplyTo ? {
+        id: currentReplyTo.id,
+        content: currentReplyTo.content,
+        userId: currentReplyTo.userId,
+        isDeleted: currentReplyTo.isDeleted,
+        user: currentReplyTo.user,
       } : null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -112,7 +112,7 @@ export function MessageInput({ currentUser, onMessageSent, replyTo, onCancelRepl
       },
     };
 
-    // Clear input and reply immediately for better UX
+    // Clear input and reply immediately for better UX - allows next message typing
     setContent("");
     setCharCount(0);
     onCancelReply(); // Clear reply context
@@ -120,18 +120,13 @@ export function MessageInput({ currentUser, onMessageSent, replyTo, onCancelRepl
     // Update UI optimistically (instant feedback)
     onMessageSent(optimisticMessage);
 
-    setIsLoading(true);
-
+    // Send in background without blocking UI
     try {
-      // Send message to server (PRIORITY - don't wait for typing status)
-      await sendMessage(messageContent, replyTo?.id);
+      // Send message to server (fire and forget - no blocking)
+      await sendMessage(messageContent, currentReplyTo?.id);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to send message");
-      // Restore the content if sending failed
-      setContent(messageContent);
-      setCharCount(messageContent.length);
-    } finally {
-      setIsLoading(false);
+      // Don't restore content - user may have moved on to next message
     }
   };
 
@@ -151,11 +146,11 @@ export function MessageInput({ currentUser, onMessageSent, replyTo, onCancelRepl
   }, [clearTypingStatus]);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-1.5 sm:space-y-2">
       {/* Reply banner */}
       {replyTo && (
-        <div className="flex items-center gap-2 bg-muted/50 border-l-2 border-primary px-3 py-2 rounded">
-          <div className="flex-1">
+        <div className="flex items-center gap-2 bg-muted/50 border-l-2 border-primary px-2.5 sm:px-3 py-1.5 sm:py-2 rounded text-sm">
+          <div className="flex-1 min-w-0">
             <div className="text-xs font-semibold text-primary">
               Replying to {replyTo.user.name}
             </div>
@@ -168,34 +163,34 @@ export function MessageInput({ currentUser, onMessageSent, replyTo, onCancelRepl
             size="sm"
             variant="ghost"
             onClick={onCancelReply}
-            className="h-6 w-6 p-0"
+            className="h-6 w-6 p-0 flex-shrink-0"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
       )}
-      <div className="flex gap-2">
+      <div className="flex gap-1.5 sm:gap-2">
         <textarea
           value={content}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Type a message... (Press Enter to send, Shift+Enter for new line)"
-          className="flex-1 rounded-md border bg-background px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+          className="flex-1 rounded-md border bg-background px-2.5 sm:px-3 py-2 text-sm sm:text-base resize-none focus:outline-none focus:ring-2 focus:ring-ring touch-manipulation min-h-[80px] sm:min-h-0"
           rows={3}
-          disabled={isLoading}
           maxLength={1000}
         />
         <Button
           type="submit"
-          disabled={!content.trim() || isLoading}
-          className="self-end"
+          disabled={!content.trim()}
+          className="self-end h-10 w-10 sm:h-11 sm:w-11 p-0 touch-manipulation active:scale-95 flex-shrink-0"
         >
           <Send className="h-4 w-4" />
         </Button>
       </div>
-      <div className="flex justify-between text-xs text-muted-foreground">
-        <span>Press Enter to send, Shift+Enter for new line</span>
-        <span className={charCount > 950 ? "text-destructive" : ""}>
+      <div className="flex justify-between text-xs text-muted-foreground px-1">
+        <span className="hidden sm:inline">Press Enter to send, Shift+Enter for new line</span>
+        <span className="sm:hidden text-[10px]">Enter to send</span>
+        <span className={charCount > 950 ? "text-destructive font-medium" : ""}>
           {charCount}/1000
         </span>
       </div>
