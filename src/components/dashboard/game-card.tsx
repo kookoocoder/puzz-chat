@@ -9,11 +9,15 @@ interface GameCardProps {
   title: string;
   image: string;
   isTop?: boolean;
+  onClick?: () => void;
 }
 
-export function GameCard({ title, image, isTop }: GameCardProps) {
+export function GameCard({ title, image, isTop, onClick }: GameCardProps) {
   return (
-    <Card className="group relative overflow-hidden rounded-xl border-0 bg-gray-900 hover:ring-2 hover:ring-purple-500 transition-all cursor-pointer">
+    <Card 
+      onClick={onClick}
+      className="group relative overflow-hidden rounded-xl border-0 bg-gray-900 hover:ring-2 hover:ring-purple-500 transition-all cursor-pointer"
+    >
       <div className="relative aspect-[16/10] overflow-hidden">
         {/* Using div with background image as fallback for placeholder URLs */}
         <div

@@ -2,12 +2,21 @@
 
 import { GameCard } from "./game-card";
 import { Game } from "@/lib/games-data";
+import { useRouter } from "next/navigation";
 
 interface GameGridProps {
   games: Game[];
 }
 
 export function GameGrid({ games }: GameGridProps) {
+  const router = useRouter();
+
+  const handleGameClick = (gameId: string) => {
+    if (gameId === "chess") {
+      router.push("/chess");
+    }
+  };
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
       {games.map((game) => (
@@ -16,6 +25,7 @@ export function GameGrid({ games }: GameGridProps) {
           title={game.title}
           image={game.image}
           isTop={game.isTop}
+          onClick={() => handleGameClick(game.id)}
         />
       ))}
     </div>

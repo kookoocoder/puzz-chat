@@ -20,6 +20,7 @@ export async function getGamesData(): Promise<GameCategory[]> {
       id: "top-games",
       name: "Top games",
       games: [
+        { id: "chess", title: "Chess", image: "/api/placeholder/300/200?text=Chess", isTop: true },
         { id: "1", title: "bloxd.io", image: "/api/placeholder/300/200?text=bloxd.io", isTop: false },
         { id: "2", title: "Crash Karts", image: "/api/placeholder/300/200?text=CrashKarts", isTop: false },
         { id: "3", title: "FrontWars", image: "/api/placeholder/300/200?text=FrontWars", isTop: true },
