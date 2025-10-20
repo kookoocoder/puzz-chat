@@ -42,25 +42,25 @@ export default function ForgotPasswordClient() {
 
   if (sent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-3 sm:p-4">
         <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-2xl max-w-md w-full">
-          <CardHeader>
-            <CardTitle className="text-center text-2xl font-bold text-foreground">
+          <CardHeader className="px-4 sm:px-6">
+            <CardTitle className="text-center text-xl sm:text-2xl font-bold text-foreground">
               Check Your Email
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-foreground/80 text-center">
-              We've sent a password reset link to <strong>{email}</strong>
+          <CardContent className="space-y-3 sm:space-y-4 px-4 sm:px-6">
+            <p className="text-foreground/80 text-center text-sm sm:text-base">
+              We've sent a password reset link to <strong className="break-all">{email}</strong>
             </p>
-            <p className="text-muted-foreground text-sm text-center">
+            <p className="text-muted-foreground text-xs sm:text-sm text-center">
               Click the link in the email to reset your password. The link will expire in 1 hour.
             </p>
             <div className="flex flex-col gap-2">
               <Link href="/auth">
                 <Button 
                   variant="outline" 
-                  className="w-full border-border/50 text-foreground hover:bg-muted"
+                  className="w-full border-border/50 text-foreground hover:bg-muted h-10 sm:h-11 touch-manipulation active:scale-95"
                 >
                   <ArrowLeft size={16} className="mr-2" />
                   Back to Sign In
@@ -74,17 +74,17 @@ export default function ForgotPasswordClient() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-3 sm:p-4">
       <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-2xl max-w-md w-full">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl font-bold text-foreground">
+        <CardHeader className="px-4 sm:px-6">
+          <CardTitle className="text-center text-xl sm:text-2xl font-bold text-foreground">
             Forgot Password
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground">
+        <CardContent className="px-4 sm:px-6">
+          <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
+            <div className="space-y-1.5 sm:space-y-2">
+              <Label htmlFor="email" className="text-foreground text-sm">
                 Email Address
               </Label>
               <Input
@@ -94,17 +94,17 @@ export default function ForgotPasswordClient() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border"
+                className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border h-10 sm:h-11 text-base"
               />
             </div>
             
-            <p className="text-muted-foreground text-sm">
+            <p className="text-muted-foreground text-xs sm:text-sm">
               Enter your email address and we'll send you a link to reset your password.
             </p>
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full h-10 sm:h-11 text-base touch-manipulation active:scale-95"
               disabled={loading}
             >
               {loading ? (
@@ -116,7 +116,7 @@ export default function ForgotPasswordClient() {
             <div className="text-center">
               <Link 
                 href="/auth"
-                className="text-muted-foreground hover:text-foreground text-sm underline"
+                className="text-muted-foreground hover:text-foreground text-xs sm:text-sm underline"
               >
                 Back to Sign In
               </Link>

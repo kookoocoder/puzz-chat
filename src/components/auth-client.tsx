@@ -13,11 +13,11 @@ export default function AuthClient() {
   const [mode, setMode] = useState<AuthMode>("signin");
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary to-background p-3 sm:p-4">
       <div className="w-full max-w-md">
         <Card className="bg-card/50 backdrop-blur-sm border-border/50 shadow-2xl">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-center text-2xl font-bold text-foreground mb-2">
+          <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+            <CardTitle className="text-center text-xl sm:text-2xl font-bold text-foreground mb-2 sm:mb-3">
               Welcome to Sunx
             </CardTitle>
             
@@ -26,7 +26,7 @@ export default function AuthClient() {
               <Button
                 variant="ghost"
                 className={cn(
-                  "flex-1 text-sm font-medium transition-all duration-200",
+                  "flex-1 text-sm font-medium transition-all duration-200 touch-manipulation active:scale-95 h-9 sm:h-10",
                   mode === "signin"
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -38,7 +38,7 @@ export default function AuthClient() {
               <Button
                 variant="ghost"
                 className={cn(
-                  "flex-1 text-sm font-medium transition-all duration-200",
+                  "flex-1 text-sm font-medium transition-all duration-200 touch-manipulation active:scale-95 h-9 sm:h-10",
                   mode === "signup"
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -50,7 +50,7 @@ export default function AuthClient() {
             </div>
           </CardHeader>
           
-          <CardContent className="pt-0">
+          <CardContent className="pt-0 px-4 sm:px-6">
             {mode === "signin" ? <SignIn /> : <SignUp />}
           </CardContent>
         </Card>

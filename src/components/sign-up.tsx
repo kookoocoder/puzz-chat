@@ -27,10 +27,10 @@ export default function SignUp() {
 	};
 
 	return (
-		<form action={handleSubmit} className="space-y-4">
-			<div className="grid grid-cols-2 gap-4">
-				<div className="space-y-2">
-					<Label htmlFor="firstName" className="text-foreground">
+		<form action={handleSubmit} className="space-y-3 sm:space-y-4">
+			<div className="grid grid-cols-2 gap-2.5 sm:gap-4">
+				<div className="space-y-1.5 sm:space-y-2">
+					<Label htmlFor="firstName" className="text-foreground text-sm">
 						First name
 					</Label>
 					<Input
@@ -38,11 +38,11 @@ export default function SignUp() {
 						name="firstName"
 						placeholder="Max"
 						required
-						className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border"
+						className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border h-10 sm:h-11 text-base"
 					/>
 				</div>
-				<div className="space-y-2">
-					<Label htmlFor="lastName" className="text-foreground">
+				<div className="space-y-1.5 sm:space-y-2">
+					<Label htmlFor="lastName" className="text-foreground text-sm">
 						Last name
 					</Label>
 					<Input
@@ -50,13 +50,13 @@ export default function SignUp() {
 						name="lastName"
 						placeholder="Robinson"
 						required
-						className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border"
+						className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border h-10 sm:h-11 text-base"
 					/>
 				</div>
 			</div>
 			
-			<div className="space-y-2">
-				<Label htmlFor="email" className="text-foreground">
+			<div className="space-y-1.5 sm:space-y-2">
+				<Label htmlFor="email" className="text-foreground text-sm">
 					Email
 				</Label>
 				<Input
@@ -65,12 +65,12 @@ export default function SignUp() {
 					type="email"
 					placeholder="m@example.com"
 					required
-					className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border"
+					className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border h-10 sm:h-11 text-base"
 				/>
 			</div>
 			
-			<div className="space-y-2">
-				<Label htmlFor="password" className="text-foreground">
+			<div className="space-y-1.5 sm:space-y-2">
+				<Label htmlFor="password" className="text-foreground text-sm">
 					Password
 				</Label>
 				<Input
@@ -80,12 +80,12 @@ export default function SignUp() {
 					autoComplete="new-password"
 					placeholder="Password"
 					required
-					className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border"
+					className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border h-10 sm:h-11 text-base"
 				/>
 			</div>
 			
-			<div className="space-y-2">
-				<Label htmlFor="passwordConfirmation" className="text-foreground">
+			<div className="space-y-1.5 sm:space-y-2">
+				<Label htmlFor="passwordConfirmation" className="text-foreground text-sm">
 					Confirm Password
 				</Label>
 				<Input
@@ -95,13 +95,13 @@ export default function SignUp() {
 					autoComplete="new-password"
 					placeholder="Confirm Password"
 					required
-					className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border"
+					className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border h-10 sm:h-11 text-base"
 				/>
 			</div>
 			
 			<Button
 				type="submit"
-				className="w-full"
+				className="w-full h-10 sm:h-11 text-base touch-manipulation active:scale-95"
 				disabled={isPending}
 			>
 				{isPending ? (

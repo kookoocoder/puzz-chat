@@ -19,6 +19,8 @@ import { TypingIndicator } from "./typing-indicator";
 import { pusherClient } from "@/lib/pusher-client";
 import { CHAT_CHANNEL } from "@/lib/pusher-shared";
 import type { ChatEvent } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Users, X } from "lucide-react";
 
 interface ChatClientProps {
   currentUser: {
@@ -34,6 +36,7 @@ export function ChatClient({ currentUser }: ChatClientProps) {
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [replyTo, setReplyTo] = useState<MessageWithUser | null>(null);
+  const [showOnlineUsers, setShowOnlineUsers] = useState(false);
 
   // Fetch messages - rare background reconcile only; Pusher handles realtime
   const {
@@ -235,23 +238,32 @@ export function ChatClient({ currentUser }: ChatClientProps) {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Main chat area */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
-        <header className="border-b bg-card px-6 py-4">
+        <header className="border-b bg-card px-3 sm:px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Global Chat</h1>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold truncate">Global Chat</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 Welcome, {currentUser.name}
               </p>
             </div>
+            {/* Mobile toggle for online users */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowOnlineUsers(!showOnlineUsers)}
+              className="md:hidden h-9 w-9 flex-shrink-0"
+            >
+              {showOnlineUsers ? <X className="h-5 w-5" /> : <Users className="h-5 w-5" />}
+            </Button>
           </div>
         </header>
 
         {/* Messages area */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           <MessageList
             messages={messages}
             currentUserId={currentUser.id}
@@ -265,7 +277,7 @@ export function ChatClient({ currentUser }: ChatClientProps) {
         {typingUsers.length > 0 && <TypingIndicator users={typingUsers} />}
 
         {/* Message input */}
-        <div className="border-t bg-card p-4">
+        <div className="border-t bg-card p-2.5 sm:p-3 md:p-4 flex-shrink-0">
           <MessageInput 
             currentUser={currentUser} 
             onMessageSent={handleMessageSent}
@@ -275,10 +287,29 @@ export function ChatClient({ currentUser }: ChatClientProps) {
         </div>
       </div>
 
-      {/* Online users sidebar */}
-      <aside className="w-64 border-l bg-card">
+      {/* Online users sidebar - Hidden on mobile by default */}
+      <aside 
+        className={`
+          ${showOnlineUsers ? 'flex' : 'hidden'} 
+          md:flex
+          w-full md:w-64 
+          border-l bg-card
+          absolute md:relative
+          right-0 top-0 bottom-0
+          z-50 md:z-auto
+          flex-shrink-0
+        `}
+      >
         <OnlineUsers users={onlineUsers} currentUserId={currentUser.id} />
       </aside>
+
+      {/* Mobile overlay */}
+      {showOnlineUsers && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden"
+          onClick={() => setShowOnlineUsers(false)}
+        />
+      )}
     </div>
   );
 }

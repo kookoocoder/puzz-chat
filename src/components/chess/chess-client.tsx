@@ -227,44 +227,46 @@ export function ChessClient({ userName, userImage }: ChessClientProps) {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col">
       {/* Header */}
-      <div className="bg-gray-900/50 border-b border-gray-800 px-4 py-3">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
+      <div className="bg-gray-900/50 border-b border-gray-800 px-3 sm:px-4 py-2.5 sm:py-3 flex-shrink-0">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <Avatar className="h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0">
               <AvatarImage src={userImage} alt={userName} />
-              <AvatarFallback className="bg-purple-600 text-white">
+              <AvatarFallback className="bg-purple-600 text-white text-sm">
                 {userName.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <h2 className="text-white font-semibold">{userName}</h2>
-              <p className="text-sm text-gray-400">Chess Puzzle</p>
+            <div className="min-w-0">
+              <h2 className="text-white font-semibold text-sm sm:text-base truncate">{userName}</h2>
+              <p className="text-xs sm:text-sm text-gray-400">Chess Puzzle</p>
             </div>
           </div>
           <Button
             onClick={handleGoHome}
             variant="outline"
-            className="border-gray-700 hover:bg-gray-800 text-white"
+            size="sm"
+            className="border-gray-700 hover:bg-gray-800 text-white h-8 sm:h-9 text-xs sm:text-sm flex-shrink-0"
           >
-            <Home className="w-4 h-4 mr-2" />
-            Dashboard
+            <Home className="w-3.5 h-3.5 sm:w-4 sm:h-4 sm:mr-2" />
+            <span className="hidden xs:inline">Dashboard</span>
           </Button>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8">
-        <div className="flex flex-col items-center gap-6">
+      <div className="flex items-center justify-center flex-1 px-2 sm:px-4 py-4 sm:py-6 md:py-8 overflow-auto">
+        <div className="flex flex-col items-center gap-3 sm:gap-4 md:gap-6 w-full max-w-[600px]">
           <ChessBoard position={game.fen()} onDrop={onDrop} />
           
           {/* Restart Button */}
-          <div className="flex flex-col items-center gap-4 w-full max-w-[600px]">
+          <div className="flex flex-col items-center gap-3 sm:gap-4 w-full px-2">
             <Button
               onClick={resetGame}
               variant="outline"
-              className="border-purple-500 hover:bg-purple-500/10 text-white w-full"
+              size="lg"
+              className="border-purple-500 hover:bg-purple-500/10 text-white w-full max-w-sm h-10 sm:h-11 text-sm sm:text-base touch-manipulation active:scale-95"
               disabled={isThinking}
             >
               <RotateCcw className="w-4 h-4 mr-2" />

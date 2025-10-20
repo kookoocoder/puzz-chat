@@ -28,9 +28,9 @@ export default function SignIn() {
   };
 
   return (
-    <form action={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email" className="text-foreground">
+    <form action={handleSubmit} className="space-y-3.5 sm:space-y-4">
+      <div className="space-y-1.5 sm:space-y-2">
+        <Label htmlFor="email" className="text-foreground text-sm">
           Email
         </Label>
         <Input
@@ -39,20 +39,20 @@ export default function SignIn() {
           type="email"
           placeholder="m@example.com"
           required
-          className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border"
+          className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border h-10 sm:h-11 text-base"
         />
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password" className="text-foreground">
+      <div className="space-y-1.5 sm:space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="password" className="text-foreground text-sm">
             Password
           </Label>
           <Link
             href="/forgot-password"
-            className="text-sm text-muted-foreground hover:text-foreground underline"
+            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground underline whitespace-nowrap"
           >
-            Forgot your password?
+            Forgot password?
           </Link>
         </div>
 
@@ -63,13 +63,13 @@ export default function SignIn() {
           placeholder="Enter your password"
           autoComplete="current-password"
           required
-          className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border"
+          className="bg-background/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:border-border h-10 sm:h-11 text-base"
         />
       </div>
 
       <Button
         type="submit"
-        className="w-full"
+        className="w-full h-10 sm:h-11 text-base touch-manipulation active:scale-95"
         disabled={isPending}
       >
         {isPending ? (
