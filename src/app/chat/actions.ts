@@ -14,6 +14,18 @@ export interface MessageWithUser {
   userId: string;
   isDeleted: boolean;
   isEdited: boolean;
+  replyToId: string | null;
+  replyTo?: {
+    id: string;
+    content: string;
+    userId: string;
+    isDeleted: boolean;
+    user: {
+      id: string;
+      name: string;
+      image: string | null;
+    };
+  } | null;
   createdAt: Date;
   updatedAt: Date;
   user: {
@@ -51,7 +63,15 @@ async function getCurrentUser() {
 export async function getMessages(): Promise<MessageWithUser[]> {
   await getCurrentUser(); // Ensure user is authenticated
 
+  // Only get messages from last 24 hours (vanish mode)
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
   const messages = await prisma.message.findMany({
+    where: {
+      createdAt: {
+        gte: twentyFourHoursAgo,
+      },
+    },
     take: 100,
     orderBy: {
       createdAt: "desc",
@@ -64,13 +84,28 @@ export async function getMessages(): Promise<MessageWithUser[]> {
           image: true,
         },
       },
+      replyTo: {
+        select: {
+          id: true,
+          content: true,
+          userId: true,
+          isDeleted: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
+        },
+      },
     },
   });
 
   return messages.reverse(); // Return oldest first for display
 }
 
-export async function sendMessage(content: string): Promise<MessageWithUser> {
+export async function sendMessage(content: string, replyToId?: string): Promise<MessageWithUser> {
   const user = await getCurrentUser();
 
   if (!content || content.trim().length === 0) {
@@ -85,6 +120,7 @@ export async function sendMessage(content: string): Promise<MessageWithUser> {
     data: {
       content: content.trim(),
       userId: user.id,
+      replyToId: replyToId || null,
     },
     include: {
       user: {
@@ -92,6 +128,21 @@ export async function sendMessage(content: string): Promise<MessageWithUser> {
           id: true,
           name: true,
           image: true,
+        },
+      },
+      replyTo: {
+        select: {
+          id: true,
+          content: true,
+          userId: true,
+          isDeleted: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
         },
       },
     },
@@ -284,5 +335,51 @@ export async function getOnlineUsers(): Promise<OnlineUser[]> {
   });
 
   return sessions.map((session) => session.user);
+}
+
+export async function setUserOnline(): Promise<void> {
+  const user = await getCurrentUser();
+
+  // Broadcast user online event
+  const event: ChatEvent = {
+    type: "user:online",
+    payload: {
+      user: {
+        id: user.id,
+        name: user.name,
+        image: (user as any).image || null,
+        updatedAt: new Date(),
+      },
+    },
+  };
+  await pusherServer.trigger(CHAT_CHANNEL, "user:online", event);
+}
+
+export async function setUserOffline(): Promise<void> {
+  const user = await getCurrentUser();
+
+  // Broadcast user offline event
+  const event: ChatEvent = {
+    type: "user:offline",
+    payload: { userId: user.id },
+  };
+  await pusherServer.trigger(CHAT_CHANNEL, "user:offline", event);
+}
+
+export async function cleanupOldMessages(): Promise<number> {
+  await getCurrentUser();
+
+  // Delete messages older than 24 hours
+  const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const result = await prisma.message.deleteMany({
+    where: {
+      createdAt: {
+        lt: twentyFourHoursAgo,
+      },
+    },
+  });
+
+  return result.count;
 }
 

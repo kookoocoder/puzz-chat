@@ -5,6 +5,9 @@ import useSWR from "swr";
 import {
   getMessages,
   getOnlineUsers,
+  setUserOnline,
+  setUserOffline,
+  cleanupOldMessages,
   type MessageWithUser,
   type TypingUser,
   type OnlineUser,
@@ -29,6 +32,8 @@ interface ChatClientProps {
 export function ChatClient({ currentUser }: ChatClientProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [replyTo, setReplyTo] = useState<MessageWithUser | null>(null);
 
   // Fetch messages - rare background reconcile only; Pusher handles realtime
   const {
@@ -40,6 +45,24 @@ export function ChatClient({ currentUser }: ChatClientProps) {
     revalidateOnFocus: false,
     dedupingInterval: 0,
   });
+
+  // Initial fetch of online users and cleanup old messages
+  useEffect(() => {
+    getOnlineUsers().then(setOnlineUsers).catch(() => {});
+    // Cleanup messages older than 24 hours on mount
+    cleanupOldMessages().catch(() => {});
+  }, []);
+
+  // Announce presence and handle cleanup on mount/unmount
+  useEffect(() => {
+    // Announce user is online
+    setUserOnline().catch(() => {});
+
+    return () => {
+      // Announce user is offline on unmount
+      setUserOffline().catch(() => {});
+    };
+  }, []);
 
   // Realtime subscriptions via Pusher
   useEffect(() => {
@@ -108,25 +131,38 @@ export function ChatClient({ currentUser }: ChatClientProps) {
       setTypingUsers((cur) => cur.filter((u) => u.id !== data.payload.userId));
     });
 
+    // Online/Offline presence - instant via Pusher
+    channel.bind("user:online", (data: ChatEvent) => {
+      if (data.type !== "user:online") return;
+      const user = data.payload.user;
+      // Don't add ourselves
+      if (user.id === currentUser.id) return;
+      setOnlineUsers((cur) => {
+        // Avoid duplicates
+        if (cur.find((u) => u.id === user.id)) return cur;
+        return [...cur, {
+          ...user,
+          updatedAt: new Date(user.updatedAt),
+        }];
+      });
+    });
+
+    channel.bind("user:offline", (data: ChatEvent) => {
+      if (data.type !== "user:offline") return;
+      setOnlineUsers((cur) => cur.filter((u) => u.id !== data.payload.userId));
+    });
+
     return () => {
       channel.unbind("message:new", handleEvent);
       channel.unbind("message:edit", handleEvent);
       channel.unbind("message:delete", handleEvent);
       channel.unbind("typing:start");
       channel.unbind("typing:stop");
+      channel.unbind("user:online");
+      channel.unbind("user:offline");
       pusherClient.unsubscribe(CHAT_CHANNEL);
     };
   }, [mutateMessages, currentUser.id]);
-
-  // Fetch online users - background only (based on session activity)
-  const { data: onlineUsers = [] } = useSWR<OnlineUser[]>(
-    "onlineUsers",
-    getOnlineUsers,
-    {
-      refreshInterval: 60000, // 60s - online status is less time-sensitive
-      revalidateOnFocus: false,
-    }
-  );
 
   const handleMessageSent = async (optimisticMessage: MessageWithUser) => {
     // Optimistically update the UI immediately
@@ -221,6 +257,7 @@ export function ChatClient({ currentUser }: ChatClientProps) {
             currentUserId={currentUser.id}
             onMessageEdited={handleMessageEdited}
             onMessageDeleted={handleMessageDeleted}
+            onReply={(message) => setReplyTo(message)}
           />
         </div>
 
@@ -231,7 +268,9 @@ export function ChatClient({ currentUser }: ChatClientProps) {
         <div className="border-t bg-card p-4">
           <MessageInput 
             currentUser={currentUser} 
-            onMessageSent={handleMessageSent} 
+            onMessageSent={handleMessageSent}
+            replyTo={replyTo}
+            onCancelReply={() => setReplyTo(null)}
           />
         </div>
       </div>

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { editMessage, deleteMessage, type MessageWithUser } from "@/app/chat/actions";
-import { Pencil, Trash2, Check, X } from "lucide-react";
+import { Pencil, Trash2, Check, X, Reply } from "lucide-react";
 import { toast } from "sonner";
 
 interface MessageItemProps {
@@ -12,6 +12,7 @@ interface MessageItemProps {
   isOwnMessage: boolean;
   onMessageEdited: (messageId: string, newContent: string) => void;
   onMessageDeleted: (messageId: string) => void;
+  onReply: (message: MessageWithUser) => void;
 }
 
 export function MessageItem({
@@ -19,6 +20,7 @@ export function MessageItem({
   isOwnMessage,
   onMessageEdited,
   onMessageDeleted,
+  onReply,
 }: MessageItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -86,15 +88,17 @@ export function MessageItem({
 
   if (message.isDeleted) {
     return (
-      <div className="flex gap-3 opacity-50">
-        <Avatar className="h-8 w-8">
-          <AvatarImage src={message.user.image || undefined} />
-          <AvatarFallback>
-            {message.user.name.charAt(0).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
-        <div className="flex-1">
-          <div className="flex items-baseline gap-2">
+      <div className={`flex gap-3 opacity-50 ${isOwnMessage ? "justify-end" : ""}`}>
+        {!isOwnMessage && (
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={message.user.image || undefined} />
+            <AvatarFallback>
+              {message.user.name.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        )}
+        <div className={`flex-1 max-w-[70%] ${isOwnMessage ? "text-right" : ""}`}>
+          <div className="flex items-baseline gap-2 flex-wrap">
             <span className="font-semibold text-sm">{message.user.name}</span>
             <span className="text-xs text-muted-foreground">
               {formatTime(message.createdAt)}
@@ -104,20 +108,28 @@ export function MessageItem({
             This message was deleted
           </div>
         </div>
+        {isOwnMessage && (
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={message.user.image || undefined} />
+            <AvatarFallback>
+              {message.user.name.charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex gap-3 group hover:bg-accent/50 rounded-lg p-2 -mx-2 transition-colors">
-      <Avatar className="h-8 w-8">
+    <div className={`flex gap-3 group hover:bg-accent/50 rounded-lg p-2 -mx-2 transition-colors ${isOwnMessage ? "flex-row-reverse" : ""}`}>
+      <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarImage src={message.user.image || undefined} />
         <AvatarFallback>
           {message.user.name.charAt(0).toUpperCase()}
         </AvatarFallback>
       </Avatar>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline gap-2 flex-wrap">
+      <div className={`flex-1 min-w-0 max-w-[70%] ${isOwnMessage ? "flex flex-col items-end" : ""}`}>
+        <div className={`flex items-baseline gap-2 flex-wrap ${isOwnMessage ? "flex-row-reverse" : ""}`}>
           <span className="font-semibold text-sm">{message.user.name}</span>
           <span className="text-xs text-muted-foreground">
             {formatTime(message.createdAt)}
@@ -129,8 +141,16 @@ export function MessageItem({
           )}
         </div>
 
+        {/* Reply context */}
+        {message.replyTo && !message.replyTo.isDeleted && (
+          <div className={`mt-1 mb-1 p-2 rounded border-l-2 ${isOwnMessage ? "border-primary bg-primary/5" : "border-muted bg-muted/30"} text-xs`}>
+            <div className="font-semibold text-muted-foreground">{message.replyTo.user.name}</div>
+            <div className="text-muted-foreground truncate">{message.replyTo.content}</div>
+          </div>
+        )}
+
         {isEditing ? (
-          <div className="mt-1 space-y-2">
+          <div className={`mt-1 space-y-2 w-full ${isOwnMessage ? "flex flex-col items-end" : ""}`}>
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
@@ -161,35 +181,49 @@ export function MessageItem({
             </div>
           </div>
         ) : (
-          <div className="mt-1">
+          <div className={`mt-1 rounded-lg px-3 py-2 ${isOwnMessage ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
             <p className="text-sm whitespace-pre-wrap break-words">
               {message.content}
             </p>
           </div>
         )}
 
-        {isOwnMessage && !isEditing && (
-          <div className="mt-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        {!isEditing && (
+          <div className={`mt-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity ${isOwnMessage ? "flex-row-reverse" : ""}`}>
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => setIsEditing(true)}
+              onClick={() => onReply(message)}
               disabled={isLoading}
               className="h-7 px-2"
             >
-              <Pencil className="h-3 w-3 mr-1" />
-              Edit
+              <Reply className="h-3 w-3 mr-1" />
+              Reply
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={handleDelete}
-              disabled={isLoading}
-              className="h-7 px-2 text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Delete
-            </Button>
+            {isOwnMessage && (
+              <>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setIsEditing(true)}
+                  disabled={isLoading}
+                  className="h-7 px-2"
+                >
+                  <Pencil className="h-3 w-3 mr-1" />
+                  Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleDelete}
+                  disabled={isLoading}
+                  className="h-7 px-2 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Delete
+                </Button>
+              </>
+            )}
           </div>
         )}
       </div>

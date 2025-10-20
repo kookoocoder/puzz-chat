@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { sendMessage, updateTypingStatus, type MessageWithUser } from "@/app/chat/actions";
-import { Send } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface MessageInputProps {
@@ -13,12 +13,14 @@ interface MessageInputProps {
     image?: string | null;
   };
   onMessageSent: (optimisticMessage: MessageWithUser) => void;
+  replyTo: MessageWithUser | null;
+  onCancelReply: () => void;
 }
 
 let typingTimeout: NodeJS.Timeout | null = null;
 let throttleTimeout: NodeJS.Timeout | null = null;
 
-export function MessageInput({ currentUser, onMessageSent }: MessageInputProps) {
+export function MessageInput({ currentUser, onMessageSent, replyTo, onCancelReply }: MessageInputProps) {
   const [content, setContent] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [charCount, setCharCount] = useState(0);
@@ -93,6 +95,14 @@ export function MessageInput({ currentUser, onMessageSent }: MessageInputProps) 
       userId: currentUser.id,
       isDeleted: false,
       isEdited: false,
+      replyToId: replyTo?.id || null,
+      replyTo: replyTo ? {
+        id: replyTo.id,
+        content: replyTo.content,
+        userId: replyTo.userId,
+        isDeleted: replyTo.isDeleted,
+        user: replyTo.user,
+      } : null,
       createdAt: new Date(),
       updatedAt: new Date(),
       user: {
@@ -102,9 +112,10 @@ export function MessageInput({ currentUser, onMessageSent }: MessageInputProps) 
       },
     };
 
-    // Clear input immediately for better UX
+    // Clear input and reply immediately for better UX
     setContent("");
     setCharCount(0);
+    onCancelReply(); // Clear reply context
     
     // Update UI optimistically (instant feedback)
     onMessageSent(optimisticMessage);
@@ -113,7 +124,7 @@ export function MessageInput({ currentUser, onMessageSent }: MessageInputProps) 
 
     try {
       // Send message to server (PRIORITY - don't wait for typing status)
-      await sendMessage(messageContent);
+      await sendMessage(messageContent, replyTo?.id);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to send message");
       // Restore the content if sending failed
@@ -141,6 +152,28 @@ export function MessageInput({ currentUser, onMessageSent }: MessageInputProps) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
+      {/* Reply banner */}
+      {replyTo && (
+        <div className="flex items-center gap-2 bg-muted/50 border-l-2 border-primary px-3 py-2 rounded">
+          <div className="flex-1">
+            <div className="text-xs font-semibold text-primary">
+              Replying to {replyTo.user.name}
+            </div>
+            <div className="text-xs text-muted-foreground truncate">
+              {replyTo.content}
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            onClick={onCancelReply}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
       <div className="flex gap-2">
         <textarea
           value={content}

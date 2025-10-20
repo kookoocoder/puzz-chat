@@ -9,6 +9,7 @@ interface MessageListProps {
   currentUserId: string;
   onMessageEdited: (messageId: string, newContent: string) => void;
   onMessageDeleted: (messageId: string) => void;
+  onReply: (message: MessageWithUser) => void;
 }
 
 export function MessageList({
@@ -16,6 +17,7 @@ export function MessageList({
   currentUserId,
   onMessageEdited,
   onMessageDeleted,
+  onReply,
 }: MessageListProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -88,6 +90,7 @@ export function MessageList({
                 isOwnMessage={message.userId === currentUserId}
                 onMessageEdited={onMessageEdited}
                 onMessageDeleted={onMessageDeleted}
+                onReply={onReply}
               />
             ))}
           </div>

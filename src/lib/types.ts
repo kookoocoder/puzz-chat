@@ -24,6 +24,14 @@ export type ChatEvent =
       userId: string;
       isDeleted: boolean;
       isEdited: boolean;
+      replyToId: string | null;
+      replyTo?: {
+        id: string;
+        content: string;
+        userId: string;
+        isDeleted: boolean;
+        user: { id: string; name: string; image: string | null };
+      } | null;
       createdAt: string | Date;
       updatedAt: string | Date;
       user: { id: string; name: string; image: string | null };
@@ -31,4 +39,6 @@ export type ChatEvent =
   | { type: "message:edit"; payload: { id: string; content: string } }
   | { type: "message:delete"; payload: { id: string } }
   | { type: "typing:start"; payload: { user: { id: string; name: string; image: string | null } } }
-  | { type: "typing:stop"; payload: { userId: string } };
+  | { type: "typing:stop"; payload: { userId: string } }
+  | { type: "user:online"; payload: { user: { id: string; name: string; image: string | null; updatedAt: string | Date } } }
+  | { type: "user:offline"; payload: { userId: string } };
