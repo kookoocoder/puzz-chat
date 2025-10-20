@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { ChatClient } from "@/components/chat/chat-client";
+import { ChatWrapper } from "@/components/chat/chat-wrapper";
 import { prisma } from "@/lib/prisma";
 
 export default async function ChatPage() {
@@ -23,6 +23,6 @@ export default async function ChatPage() {
     redirect("/chess");
   }
 
-  return <ChatClient currentUser={session.user} />;
+  return <ChatWrapper currentUser={session.user} />;
 }
 
