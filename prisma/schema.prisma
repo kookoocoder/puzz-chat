@@ -5,20 +5,22 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id            String    @id @default(uuid())
+  id            String         @id @default(uuid())
   name          String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   email         String
   emailVerified Boolean
   image         String?
   sessions      Session[]
   accounts      Account[]
+  messages      Message[]
+  typingStatus  TypingStatus?
 
   @@unique([email])
   @@map("user")
@@ -67,4 +69,29 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isDeleted Boolean  @default(false)
+  isEdited  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([userId])
+  @@map("message")
+}
+
+model TypingStatus {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isTyping  Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@map("typing_status")
 }

@@ -9,14 +9,16 @@ A modern, production-ready authentication template built with Next.js 15, Better
 ## ✨ Features
 
 - 🔐 **Complete Authentication Flow** - Sign up, sign in, password reset
+- 💬 **Real-time Global Chat** - Live messaging with typing indicators and online status
 - 🎨 **Modern UI** - Beautiful dark theme with glassmorphism effects
 - ⚡ **Next.js 15** - Latest App Router with server actions
-- 🗄️ **Database Ready** - SQLite with Prisma (easy to swap to PostgreSQL)
+- 🗄️ **PostgreSQL Database** - Production-ready database with Prisma ORM
 - 🔒 **Better Auth** - Secure authentication with session management
 - 📱 **Responsive Design** - Works perfectly on all devices
 - 🎯 **TypeScript** - Full type safety throughout
 - 🎨 **shadcn/ui** - Professional UI components
 - 🔄 **Server Actions** - Form handling with Zod validation
+- ✏️ **Message Management** - Edit and delete your own messages
 
 ## 🚀 Quick Start
 
@@ -41,12 +43,23 @@ cp .env.example .env
 
 Update `.env` with your configuration:
 ```env
-# Database (SQLite by default)
-DATABASE_URL="file:./local.db"
+# Database - PostgreSQL required for chat feature
+# For local development with Prisma.io Accelerate:
+# DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
+# For production with Prisma.io:
+# DATABASE_URL="prisma://accelerate.prisma-data.net/?api_key=YOUR_API_KEY"
+DATABASE_URL="postgresql://user:password@localhost:5432/puzz_chat"
 
 # App URL (no trailing slash)
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 ```
+
+**Note**: This project requires PostgreSQL. You can use:
+- Local PostgreSQL installation
+- [Prisma.io Accelerate](https://www.prisma.io/data-platform/accelerate) - Recommended for Vercel deployment
+- [Supabase](https://supabase.com) - Free PostgreSQL hosting
+- [Neon](https://neon.tech) - Serverless PostgreSQL
+- [Railway](https://railway.app) - Easy PostgreSQL deployment
 
 ### 3. Database Setup
 
@@ -74,6 +87,9 @@ src/
 │   ├── auth/
 │   │   ├── page.tsx              # Auth page (protected from logged-in users)
 │   │   └── action.ts             # Server actions for auth
+│   ├── chat/
+│   │   ├── page.tsx              # Real-time chat page (protected)
+│   │   └── actions.ts            # Server actions for chat
 │   ├── dashboard/
 │   │   └── page.tsx              # Protected dashboard
 │   ├── forgot-password/
@@ -91,6 +107,13 @@ src/
 │   ├── sign-up.tsx               # Sign up form
 │   ├── forgot-password-client.tsx # Forgot password UI
 │   ├── reset-password-client.tsx # Reset password UI
+│   ├── chat/
+│   │   ├── chat-client.tsx       # Main chat container with SWR polling
+│   │   ├── message-list.tsx      # Message list with auto-scroll
+│   │   ├── message-item.tsx      # Individual message with edit/delete
+│   │   ├── message-input.tsx     # Message input with typing detection
+│   │   ├── typing-indicator.tsx  # Shows who's typing
+│   │   └── online-users.tsx      # Online users sidebar
 │   └── ui/                       # shadcn/ui components
 ├── lib/
 │   ├── auth.ts                   # Better Auth configuration
@@ -132,12 +155,44 @@ export const auth = betterAuth({
 
 ### Database Schema
 
-The Prisma schema includes all necessary tables for Better Auth:
+The Prisma schema includes all necessary tables for Better Auth and Chat:
 
 - **User** - User information and authentication data
 - **Session** - User sessions for authentication
 - **Account** - OAuth and credential accounts
 - **Verification** - Email verification tokens
+- **Message** - Chat messages with soft delete and edit tracking
+- **TypingStatus** - Real-time typing indicators
+
+## 💬 Chat Feature
+
+The chat feature provides a real-time messaging experience with:
+
+### Features
+- **Global Chat Room** - Single chat room accessible to all authenticated users
+- **Real-time Updates** - Messages update every 3 seconds using SWR polling
+- **Message Management** - Edit and delete your own messages
+- **Typing Indicators** - See who's currently typing (updates every 2 seconds)
+- **Online Status** - View all users online in the last 5 minutes (updates every 10 seconds)
+- **Message History** - Last 100 messages are displayed
+- **Date Separators** - Messages grouped by date for better readability
+- **Character Limit** - 1000 characters per message
+
+### Usage
+1. Navigate to `/chat` (requires authentication)
+2. Type your message in the input box
+3. Press Enter to send (Shift+Enter for new line)
+4. Hover over your messages to edit or delete them
+5. See online users in the right sidebar
+
+### Technical Details
+- **Polling Strategy**: Uses SWR with different intervals for different data types
+  - Messages: 3 seconds
+  - Typing status: 2 seconds  
+  - Online users: 10 seconds
+- **Authentication**: All chat actions require valid session
+- **Soft Deletes**: Deleted messages remain in database but show as "deleted"
+- **Edit Tracking**: Edited messages are marked with "(edited)" label
 
 ## 🎨 Customization
 
@@ -180,37 +235,53 @@ Popular email providers:
 
 ## 🚀 Deployment
 
+### Deploying to Vercel with Prisma.io
+
+For the best experience on Vercel, we recommend using Prisma.io Accelerate:
+
+1. **Set up Prisma.io Accelerate**
+   - Sign up at [Prisma.io](https://www.prisma.io/data-platform)
+   - Create a new project and get your Accelerate connection string
+   - The connection string will look like: `prisma://accelerate.prisma-data.net/?api_key=YOUR_API_KEY`
+
+2. **Configure your Vercel project**
+   - Push your code to GitHub/GitLab/Bitbucket
+   - Import the project in Vercel
+   - Set environment variables:
+     ```env
+     DATABASE_URL="prisma://accelerate.prisma-data.net/?api_key=YOUR_API_KEY"
+     NEXT_PUBLIC_APP_URL="https://your-domain.vercel.app"
+     ```
+
+3. **Deploy**
+   - Vercel will automatically run the build
+   - The Prisma client is generated during build time
+   - Your chat will be live with near real-time updates!
+
+### Alternative PostgreSQL Providers
+
+You can also use other PostgreSQL providers:
+
+- **Supabase**: Free tier available, good for small projects
+  ```env
+  DATABASE_URL="postgresql://postgres:[password]@[host]:5432/postgres"
+  ```
+
+- **Neon**: Serverless PostgreSQL with generous free tier
+  ```env
+  DATABASE_URL="postgresql://[user]:[password]@[host]/[dbname]?sslmode=require"
+  ```
+
+- **Railway**: Easy one-click PostgreSQL deployment
+  - Connection string provided in project settings
+
 ### Environment Variables
 
-Set these in your production environment:
+Required environment variables for production:
 
 ```env
-DATABASE_URL="your-production-database-url"
+DATABASE_URL="your-production-postgresql-url"
 NEXT_PUBLIC_APP_URL="https://your-domain.com"
-```
-
-### Database Migration
-
-For production, consider using PostgreSQL:
-
-1. Update `prisma/schema.prisma`:
-```prisma
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-```
-
-2. Update the auth configuration:
-```typescript
-database: prismaAdapter(prisma, {
-  provider: "postgresql",
-}),
-```
-
-3. Deploy your database and run migrations:
-```bash
-npx prisma migrate deploy
 ```
 
 ### Deployment Platforms
