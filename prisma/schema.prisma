@@ -10,17 +10,18 @@ datasource db {
 }
 
 model User {
-  id            String         @id @default(uuid())
-  name          String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  email         String
-  emailVerified Boolean
-  image         String?
-  sessions      Session[]
-  accounts      Account[]
-  messages      Message[]
-  typingStatus  TypingStatus?
+  id             String         @id @default(uuid())
+  name           String
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  email          String
+  emailVerified  Boolean
+  image          String?
+  chessCompleted Boolean        @default(false)
+  sessions       Session[]
+  accounts       Account[]
+  messages       Message[]
+  typingStatus   TypingStatus?
 
   @@unique([email])
   @@map("user")

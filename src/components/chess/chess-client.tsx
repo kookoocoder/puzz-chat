@@ -4,10 +4,13 @@ import { useState, useCallback } from "react";
 import { Chess } from "chess.js";
 import { ChessBoard } from "./chess-board";
 import { UnlockDialog } from "./unlock-dialog";
+import { GameOverDialog } from "./game-over-dialog";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Home } from "lucide-react";
+import { Home, RotateCcw } from "lucide-react";
+import { markChessCompleted } from "@/app/chess/actions";
+import { toast } from "sonner";
 
 interface ChessClientProps {
   userName: string;
@@ -23,23 +26,89 @@ const BLACK_RESPONSES: Record<number, string> = {
   2: "Nc6", // Response to Nf3
 };
 
+type GameOverState = {
+  isOver: boolean;
+  result?: "checkmate" | "stalemate" | "draw" | "threefold" | "insufficient";
+  winner?: "White" | "Black";
+};
+
 export function ChessClient({ userName, userImage }: ChessClientProps) {
   const router = useRouter();
   const [game, setGame] = useState(new Chess());
   const [whiteMovesHistory, setWhiteMovesHistory] = useState<string[]>([]);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [gameOverState, setGameOverState] = useState<GameOverState>({ isOver: false });
 
-  const checkUnlock = useCallback((whiteMoves: string[]) => {
+  const checkUnlock = useCallback(async (whiteMoves: string[]) => {
     if (whiteMoves.length === REQUIRED_SEQUENCE.length) {
       const matches = whiteMoves.every(
         (move, index) => move === REQUIRED_SEQUENCE[index]
       );
       if (matches) {
         setIsUnlocked(true);
+        
+        // Mark chess as completed in the database
+        const result = await markChessCompleted();
+        if (!result.success) {
+          toast.error("Failed to save progress");
+        }
+        
         return true;
       }
     }
+    return false;
+  }, []);
+
+  const checkGameOver = useCallback((currentGame: Chess) => {
+    // Check for checkmate
+    if (currentGame.isCheckmate()) {
+      const winner = currentGame.turn() === "w" ? "Black" : "White";
+      setGameOverState({
+        isOver: true,
+        result: "checkmate",
+        winner,
+      });
+      return true;
+    }
+
+    // Check for stalemate
+    if (currentGame.isStalemate()) {
+      setGameOverState({
+        isOver: true,
+        result: "stalemate",
+      });
+      return true;
+    }
+
+    // Check for threefold repetition
+    if (currentGame.isThreefoldRepetition()) {
+      setGameOverState({
+        isOver: true,
+        result: "threefold",
+      });
+      return true;
+    }
+
+    // Check for insufficient material
+    if (currentGame.isInsufficientMaterial()) {
+      setGameOverState({
+        isOver: true,
+        result: "insufficient",
+      });
+      return true;
+    }
+
+    // Check for draw (50-move rule or other draw conditions)
+    if (currentGame.isDraw()) {
+      setGameOverState({
+        isOver: true,
+        result: "draw",
+      });
+      return true;
+    }
+
+    // Game is still ongoing
     return false;
   }, []);
 
@@ -76,8 +145,9 @@ export function ChessClient({ userName, userImage }: ChessClientProps) {
 
       setGame(gameCopy);
       setIsThinking(false);
+      checkGameOver(gameCopy);
     }, 500);
-  }, []);
+  }, [checkGameOver]);
 
   const onDrop = useCallback(
     ({ sourceSquare, targetSquare }: { piece: { isSparePiece: boolean; position: string; pieceType: string }; sourceSquare: string; targetSquare: string | null }): boolean => {
@@ -118,20 +188,25 @@ export function ChessClient({ userName, userImage }: ChessClientProps) {
         const newWhiteHistory = [...whiteMovesHistory, move.san];
         setWhiteMovesHistory(newWhiteHistory);
 
-        // Check if puzzle is unlocked
-        if (!checkUnlock(newWhiteHistory)) {
-          // Make black's automatic response if game isn't over
-          if (!gameCopy.isGameOver()) {
-            makeBlackMove(gameCopy, newWhiteHistory.length);
+        // Check if game is over after white's move
+        const isGameOver = checkGameOver(gameCopy);
+        
+        // Check if puzzle is unlocked (async operation)
+        checkUnlock(newWhiteHistory).then((unlocked) => {
+          if (!unlocked) {
+            // Make black's automatic response if game isn't over
+            if (!isGameOver && !gameCopy.isGameOver()) {
+              makeBlackMove(gameCopy, newWhiteHistory.length);
+            }
           }
-        }
+        });
 
         return true;
       } catch (error) {
         return false;
       }
     },
-    [game, whiteMovesHistory, checkUnlock, makeBlackMove, isThinking]
+    [game, whiteMovesHistory, checkUnlock, makeBlackMove, isThinking, checkGameOver]
   );
 
   const resetGame = useCallback(() => {
@@ -140,6 +215,7 @@ export function ChessClient({ userName, userImage }: ChessClientProps) {
     setWhiteMovesHistory([]);
     setIsUnlocked(false);
     setIsThinking(false);
+    setGameOverState({ isOver: false });
   }, []);
 
   const handleEnterChat = useCallback(() => {
@@ -179,12 +255,36 @@ export function ChessClient({ userName, userImage }: ChessClientProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4">
-        <ChessBoard position={game.fen()} onDrop={onDrop} />
+      <div className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8">
+        <div className="flex flex-col items-center gap-6">
+          <ChessBoard position={game.fen()} onDrop={onDrop} />
+          
+          {/* Restart Button */}
+          <div className="flex flex-col items-center gap-4 w-full max-w-[600px]">
+            <Button
+              onClick={resetGame}
+              variant="outline"
+              className="border-purple-500 hover:bg-purple-500/10 text-white w-full"
+              disabled={isThinking}
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Restart Game
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Unlock Dialog */}
       {isUnlocked && <UnlockDialog onEnterChat={handleEnterChat} />}
+      
+      {/* Game Over Dialog */}
+      {gameOverState.isOver && gameOverState.result && (
+        <GameOverDialog
+          result={gameOverState.result}
+          winner={gameOverState.winner}
+          onRestart={resetGame}
+        />
+      )}
     </div>
   );
 }
