@@ -13,6 +13,8 @@ interface MessageItemProps {
   onMessageEdited: (messageId: string, newContent: string) => void;
   onMessageDeleted: (messageId: string) => void;
   onReply: (message: MessageWithUser) => void;
+  onScrollToMessage: (messageId: string) => void;
+  isHighlighted: boolean;
 }
 
 export function MessageItem({
@@ -21,6 +23,8 @@ export function MessageItem({
   onMessageEdited,
   onMessageDeleted,
   onReply,
+  onScrollToMessage,
+  isHighlighted,
 }: MessageItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -88,7 +92,10 @@ export function MessageItem({
 
   if (message.isDeleted) {
     return (
-      <div className={`flex gap-3 opacity-50 ${isOwnMessage ? "justify-end" : ""}`}>
+      <div 
+        id={`message-${message.id}`}
+        className={`flex gap-3 opacity-50 ${isOwnMessage ? "justify-end" : ""} ${isHighlighted ? "bg-primary/20 animate-pulse" : ""}`}
+      >
         {!isOwnMessage && (
           <Avatar className="h-8 w-8">
             <AvatarImage src={message.user.image || undefined} />
@@ -121,7 +128,10 @@ export function MessageItem({
   }
 
   return (
-    <div className={`flex gap-3 group hover:bg-accent/50 rounded-lg p-2 -mx-2 transition-colors ${isOwnMessage ? "flex-row-reverse" : ""}`}>
+    <div 
+      id={`message-${message.id}`}
+      className={`flex gap-3 group hover:bg-accent/50 rounded-lg p-2 -mx-2 transition-all ${isOwnMessage ? "flex-row-reverse" : ""} ${isHighlighted ? "bg-primary/20 ring-2 ring-primary/50" : ""}`}
+    >
       <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarImage src={message.user.image || undefined} />
         <AvatarFallback>
@@ -143,10 +153,13 @@ export function MessageItem({
 
         {/* Reply context */}
         {message.replyTo && !message.replyTo.isDeleted && (
-          <div className={`mt-1 mb-1 p-2 rounded border-l-2 ${isOwnMessage ? "border-primary bg-primary/5" : "border-muted bg-muted/30"} text-xs`}>
+          <button
+            onClick={() => onScrollToMessage(message.replyTo!.id)}
+            className={`mt-1 mb-1 p-2 rounded border-l-2 ${isOwnMessage ? "border-primary bg-primary/5 hover:bg-primary/10" : "border-muted bg-muted/30 hover:bg-muted/50"} text-xs cursor-pointer transition-colors w-full text-left`}
+          >
             <div className="font-semibold text-muted-foreground">{message.replyTo.user.name}</div>
             <div className="text-muted-foreground truncate">{message.replyTo.content}</div>
-          </div>
+          </button>
         )}
 
         {isEditing ? (

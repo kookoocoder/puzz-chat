@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageItem } from "./message-item";
 import type { MessageWithUser } from "@/app/chat/actions";
 
@@ -22,9 +22,23 @@ export function MessageList({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const previousMessagesLengthRef = useRef(messages.length);
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const scrollToMessage = (messageId: string) => {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement) {
+      messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+      
+      // Highlight the message briefly
+      setHighlightedMessageId(messageId);
+      setTimeout(() => {
+        setHighlightedMessageId(null);
+      }, 2000);
+    }
   };
 
   useEffect(() => {
@@ -91,6 +105,8 @@ export function MessageList({
                 onMessageEdited={onMessageEdited}
                 onMessageDeleted={onMessageDeleted}
                 onReply={onReply}
+                onScrollToMessage={scrollToMessage}
+                isHighlighted={highlightedMessageId === message.id}
               />
             ))}
           </div>
