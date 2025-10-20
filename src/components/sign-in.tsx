@@ -44,18 +44,9 @@ export default function SignIn() {
       </div>
 
       <div className="space-y-1.5 sm:space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <Label htmlFor="password" className="text-foreground text-sm">
-            Password
-          </Label>
-          <Link
-            href="/forgot-password"
-            className="text-xs sm:text-sm text-muted-foreground hover:text-foreground underline whitespace-nowrap"
-          >
-            Forgot password?
-          </Link>
-        </div>
-
+        <Label htmlFor="password" className="text-foreground text-sm">
+          Password
+        </Label>
         <Input
           id="password"
           name="password"
@@ -77,6 +68,10 @@ export default function SignIn() {
         ) : null}
         Sign In
       </Button>
+      
+      <p className="text-center text-xs text-muted-foreground">
+        Contact an administrator to create an account
+      </p>
     </form>
   );
 }

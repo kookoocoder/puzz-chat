@@ -20,7 +20,10 @@ import { pusherClient } from "@/lib/pusher-client";
 import { CHAT_CHANNEL } from "@/lib/pusher-shared";
 import type { ChatEvent } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Users, X } from "lucide-react";
+import { Users, X, Shield, Trash2, Power, PowerOff } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { clearAllMessages, toggleChatEnabled } from "@/app/admin/actions";
+import { toast } from "sonner";
 
 interface ChatClientProps {
   currentUser: {
@@ -29,14 +32,54 @@ interface ChatClientProps {
     email: string;
     image?: string | null;
   };
+  isAdmin?: boolean;
+  chatEnabled?: boolean;
 }
 
-export function ChatClient({ currentUser }: ChatClientProps) {
+export function ChatClient({ currentUser, isAdmin = false, chatEnabled = true }: ChatClientProps) {
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [typingUsers, setTypingUsers] = useState<TypingUser[]>([]);
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
   const [replyTo, setReplyTo] = useState<MessageWithUser | null>(null);
   const [showOnlineUsers, setShowOnlineUsers] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  const handleClearChat = async () => {
+    if (!confirm("Clear all messages? This cannot be undone!")) return;
+    
+    setAdminLoading(true);
+    try {
+      const result = await clearAllMessages();
+      if (result.success) {
+        toast.success(`Cleared ${result.count} messages`);
+        mutateMessages();
+      } else {
+        toast.error(result.error || "Failed to clear messages");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
+  const handleToggleChat = async () => {
+    setAdminLoading(true);
+    try {
+      const result = await toggleChatEnabled();
+      if (result.success) {
+        toast.success(result.isEnabled ? "Chat enabled" : "Chat disabled");
+        router.refresh();
+      } else {
+        toast.error(result.error || "Failed to toggle chat");
+      }
+    } catch (error) {
+      toast.error("An error occurred");
+    } finally {
+      setAdminLoading(false);
+    }
+  };
 
   // Fetch messages - rare background reconcile only; Pusher handles realtime
   const {
@@ -243,22 +286,70 @@ export function ChatClient({ currentUser }: ChatClientProps) {
       <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
         <header className="border-b bg-card px-3 sm:px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg sm:text-xl md:text-2xl font-bold truncate">Global Chat</h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg sm:text-xl md:text-2xl font-bold truncate">Global Chat</h1>
+                {isAdmin && (
+                  <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500 flex-shrink-0" />
+                )}
+                {!chatEnabled && (
+                  <span className="text-xs bg-red-600 px-2 py-1 rounded text-white">Disabled</span>
+                )}
+              </div>
               <p className="text-xs sm:text-sm text-muted-foreground truncate">
                 Welcome, {currentUser.name}
               </p>
             </div>
-            {/* Mobile toggle for online users */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowOnlineUsers(!showOnlineUsers)}
-              className="md:hidden h-9 w-9 flex-shrink-0"
-            >
-              {showOnlineUsers ? <X className="h-5 w-5" /> : <Users className="h-5 w-5" />}
-            </Button>
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+              {/* Admin Controls */}
+              {isAdmin && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => router.push("/admin")}
+                    className="h-8 w-8 sm:h-9 sm:w-9 text-purple-500 hover:text-purple-400 hidden sm:flex"
+                    title="Admin Panel"
+                  >
+                    <Shield className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleToggleChat}
+                    disabled={adminLoading}
+                    className="h-8 w-8 sm:h-9 sm:w-9 hidden sm:flex"
+                    title={chatEnabled ? "Disable Chat" : "Enable Chat"}
+                  >
+                    {chatEnabled ? (
+                      <PowerOff className="h-4 w-4 sm:h-5 sm:w-5 text-red-500" />
+                    ) : (
+                      <Power className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleClearChat}
+                    disabled={adminLoading}
+                    className="h-8 w-8 sm:h-9 sm:w-9 text-red-500 hover:text-red-400 hidden sm:flex"
+                    title="Clear All Messages"
+                  >
+                    <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  </Button>
+                </>
+              )}
+              {/* Mobile toggle for online users */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowOnlineUsers(!showOnlineUsers)}
+                className="md:hidden h-8 w-8 sm:h-9 sm:w-9"
+              >
+                {showOnlineUsers ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Users className="h-4 w-4 sm:h-5 sm:w-5" />}
+              </Button>
+            </div>
           </div>
         </header>
 

@@ -18,6 +18,7 @@ model User {
   emailVerified  Boolean
   image          String?
   chessCompleted Boolean        @default(false)
+  isAdmin        Boolean        @default(false)
   sessions       Session[]
   accounts       Account[]
   messages       Message[]
@@ -99,4 +100,13 @@ model TypingStatus {
   updatedAt DateTime @updatedAt
 
   @@map("typing_status")
+}
+
+model ChatSettings {
+  id          String   @id @default(uuid())
+  isEnabled   Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
+
+  @@map("chat_settings")
 }

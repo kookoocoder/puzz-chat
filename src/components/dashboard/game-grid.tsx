@@ -11,9 +11,11 @@ interface GameGridProps {
 export function GameGrid({ games }: GameGridProps) {
   const router = useRouter();
 
-  const handleGameClick = (gameId: string) => {
-    if (gameId === "chess") {
+  const handleGameClick = (game: Game) => {
+    if (game.id === "chess") {
       router.push("/chess");
+    } else if (game.externalUrl) {
+      window.open(game.externalUrl, "_blank", "noopener,noreferrer");
     }
   };
 
@@ -25,7 +27,7 @@ export function GameGrid({ games }: GameGridProps) {
           title={game.title}
           image={game.image}
           isTop={game.isTop}
-          onClick={() => handleGameClick(game.id)}
+          onClick={() => handleGameClick(game)}
         />
       ))}
     </div>

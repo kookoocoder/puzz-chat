@@ -11,9 +11,11 @@ interface ChatWrapperProps {
     email: string;
     image?: string | null;
   };
+  isAdmin?: boolean;
+  chatEnabled?: boolean;
 }
 
-export function ChatWrapper({ currentUser }: ChatWrapperProps) {
+export function ChatWrapper({ currentUser, isAdmin = false, chatEnabled = true }: ChatWrapperProps) {
   const hasRevokedRef = useRef(false);
 
   useEffect(() => {
@@ -64,6 +66,6 @@ export function ChatWrapper({ currentUser }: ChatWrapperProps) {
     };
   }, []);
 
-  return <ChatClient currentUser={currentUser} />;
+  return <ChatClient currentUser={currentUser} isAdmin={isAdmin} chatEnabled={chatEnabled} />;
 }
 
